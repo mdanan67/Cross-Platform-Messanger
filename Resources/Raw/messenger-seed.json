@@ -1,0 +1,38 @@
+{
+  "currentUser": { "id": "me", "name": "Alex Morgan", "username": "@alexmorgan", "avatar": "AM", "status": "Available for a chat", "isOnline": true },
+  "conversations": [
+    { "id": "sophie", "name": "Sophie Wilson", "avatar": "SW", "preview": "That sounds perfect! See you soon.", "time": "10:42 AM", "unread": 2, "isOnline": true, "isPinned": true, "messages": [
+      { "sender": "Sophie Wilson", "text": "Hey Alex! Are we still on for coffee this afternoon?", "time": "10:36 AM", "isMine": false },
+      { "sender": "Alex Morgan", "text": "Absolutely! I found a lovely new place downtown.", "time": "10:39 AM", "isMine": true },
+      { "sender": "Sophie Wilson", "text": "That sounds perfect! See you soon.", "time": "10:42 AM", "isMine": false }
+    ] },
+    { "id": "design", "name": "Design team", "avatar": "DT", "preview": "Maya shared a new prototype", "time": "9:18 AM", "unread": 5, "isOnline": true, "isGroup": true, "messages": [
+      { "sender": "Maya Chen", "text": "I shared a new prototype for everyone to review.", "time": "9:18 AM", "isMine": false }
+    ] },
+    { "id": "james", "name": "James Anderson", "avatar": "JA", "preview": "I will send the files tonight.", "time": "Yesterday", "unread": 0, "isOnline": false, "messages": [
+      { "sender": "James Anderson", "text": "I will send the files tonight.", "time": "Yesterday", "isMine": false }
+    ] },
+    { "id": "emma", "name": "Emma Davis", "avatar": "ED", "preview": "Thanks for your help!", "time": "Monday", "unread": 0, "isOnline": true, "messages": [
+      { "sender": "Emma Davis", "text": "Thanks for your help!", "time": "Monday", "isMine": false }
+    ] }
+  ],
+  "contacts": [
+    { "id": "sophie", "name": "Sophie Wilson", "username": "@sophiew", "avatar": "SW", "status": "Designing a better day", "isOnline": true, "isFavorite": true },
+    { "id": "emma", "name": "Emma Davis", "username": "@emmadavis", "avatar": "ED", "status": "Available for a chat", "isOnline": true, "isFavorite": true },
+    { "id": "james", "name": "James Anderson", "username": "@jamesa", "avatar": "JA", "status": "Away", "isOnline": false, "isFavorite": false },
+    { "id": "olivia", "name": "Olivia Brown", "username": "@oliviab", "avatar": "OB", "status": "Exploring new places", "isOnline": false, "isFavorite": false }
+  ],
+  "groups": [
+    { "id": "design", "name": "Design team", "avatar": "DT", "description": "Ideas, feedback, and good work.", "memberCount": 8, "lastActivity": "Maya shared a new prototype" },
+    { "id": "weekend", "name": "Weekend plans", "avatar": "WP", "description": "Making the weekend count.", "memberCount": 6, "lastActivity": "James added a new place" }
+  ],
+  "friendRequests": [
+    { "id": "noah", "name": "Noah Williams", "username": "@noahw", "avatar": "NW", "mutualFriends": "4 mutual friends" },
+    { "id": "mia", "name": "Mia Taylor", "username": "@miataylor", "avatar": "MT", "mutualFriends": "2 mutual friends" }
+  ],
+  "notifications": [
+    { "id": "n1", "title": "Sophie sent you a message", "description": "That sounds perfect! See you soon.", "time": "2 min ago", "icon": "chat", "isUnread": true },
+    { "id": "n2", "title": "New friend request", "description": "Noah Williams wants to connect with you.", "time": "1 hour ago", "icon": "person", "isUnread": true },
+    { "id": "n3", "title": "You were added to Design team", "description": "Maya added you to a new group.", "time": "Yesterday", "icon": "group", "isUnread": false }
+  ]
+}

@@ -1,0 +1,90 @@
+@page "/messenger"
+@using mauitest.Models
+@using mauitest.Services
+@inject IMessengerDataService DataService
+
+<PageTitle>Pulse messenger</PageTitle>
+
+@if (_data is null)
+{
+    <div class="loading-screen"><div class="brand-mark">P</div><span>Loading your conversations...</span></div>
+}
+else
+{
+    <div class='messenger-shell @(_darkMode ? "dark-theme" : "") @(_sidebarOpen ? "sidebar-open" : "") @(_showMobileChat ? "mobile-chat-open" : "")'>
+        <aside class="app-sidebar">
+            <div class="brand-row"><div class="brand-mark">P</div><span>pulse</span><button class="icon-button sidebar-close" @onclick="ToggleSidebar">×</button></div>
+            <div class="profile-mini"><div class="avatar avatar-gradient">@_data.CurrentUser.Avatar</div><div><strong>@_data.CurrentUser.Name</strong><small><span class="online-dot"></span> @(_data.CurrentUser.Status)</small></div><button class="more-button">•••</button></div>
+            <nav class="main-nav" aria-label="Main navigation">
+                <button class='nav-item @Active("chats")' @onclick='() => SetView("chats")'><span class="nav-icon">▣</span>Chats <b class='nav-badge @(UnreadCount == 0 ? "hidden-badge" : "")'>@UnreadCount</b></button>
+                <button class='nav-item @Active("contacts")' @onclick='() => SetView("contacts")'><span class="nav-icon">♧</span>Contacts</button>
+                <button class='nav-item @Active("groups")' @onclick='() => SetView("groups")'><span class="nav-icon">▦</span>Groups</button>
+                <button class='nav-item @Active("notifications")' @onclick='() => SetView("notifications")'><span class="nav-icon">♢</span>Notifications <b class='nav-badge @(_data.Notifications.All(n => !n.IsUnread) ? "hidden-badge" : "")'>@_data.Notifications.Count(n => n.IsUnread)</b></button>
+            </nav>
+            <div class="sidebar-bottom"><button class="nav-item" @onclick="ToggleTheme"><span class="nav-icon">◐</span>@(_darkMode ? "Light mode" : "Dark mode")</button><button class='nav-item' @onclick='() => SetView("profile")'><span class="nav-icon">⚙</span>Settings</button><div class="upgrade-card"><span class="sparkle">✦</span><strong>Make more room<br />for your people</strong><small>Upgrade to Pulse Pro</small><button>Learn more <span>→</span></button></div></div>
+        </aside>
+        <section class="workspace">
+            <header class="mobile-header"><button class="icon-button" @onclick="ToggleSidebar">☰</button><div class="brand-row"><div class="brand-mark">P</div><span>pulse</span></div><button class='icon-button' @onclick='() => SetView("profile")'>@_data.CurrentUser.Avatar</button></header>
+            @if (_view == "chats") { @ChatView } else if (_view == "contacts") { @ContactsView } else if (_view == "groups") { @GroupsView } else if (_view == "notifications") { @NotificationsView } else { @ProfileView }
+        </section>
+    </div>
+}
+
+@code {
+    private MessengerSeed? _data;
+    private string _view = "chats";
+    private string _query = "";
+    private string _selectedId = "sophie";
+    private string _draft = "";
+    private bool _darkMode;
+    private bool _sidebarOpen;
+    private bool _showMobileChat;
+    private int UnreadCount => _data?.Conversations.Sum(c => c.Unread) ?? 0;
+    private Conversation? SelectedConversation => _data?.Conversations.FirstOrDefault(c => c.Id == _selectedId);
+    private IEnumerable<Conversation> FilteredConversations => (_data?.Conversations ?? []).Where(c => string.IsNullOrWhiteSpace(_query) || c.Name.Contains(_query, StringComparison.OrdinalIgnoreCase) || c.Preview.Contains(_query, StringComparison.OrdinalIgnoreCase));
+    private string Active(string view) => _view == view ? "active" : "";
+    protected override async Task OnInitializedAsync() => _data = await DataService.LoadAsync();
+    private void SetView(string view) { _view = view; _sidebarOpen = false; if (view != "chats") _showMobileChat = false; }
+    private void ToggleSidebar() => _sidebarOpen = !_sidebarOpen;
+    private void ToggleTheme() => _darkMode = !_darkMode;
+    private void SelectConversation(Conversation conversation) { _selectedId = conversation.Id; conversation.Unread = 0; _showMobileChat = true; }
+    private void CloseMobileChat() => _showMobileChat = false;
+    private void SendMessage() { if (SelectedConversation is null || string.IsNullOrWhiteSpace(_draft)) return; SelectedConversation.Messages.Add(new ChatMessage { Sender = _data!.CurrentUser.Name, Text = _draft.Trim(), Time = DateTime.Now.ToString("h:mm tt"), IsMine = true }); SelectedConversation.Preview = _draft.Trim(); SelectedConversation.Time = "now"; _draft = ""; }
+
+    private RenderFragment ChatView => @<div class="chat-layout @( _sidebarOpen ? "sidebar-open" : "")">
+        <div class="conversation-panel"><div class="page-heading"><div><p class="eyebrow">Your space</p><h1>Messages</h1></div><button class="round-button">＋</button></div><div class="search-box"><span>⌕</span><input @bind="_query" placeholder="Search conversations" /><kbd>⌘ K</kbd></div><div class="conversation-tabs"><button class="tab active">All <span>@_data!.Conversations.Count</span></button><button class="tab">Unread <span>@UnreadCount</span></button><button class="tab">Groups</button></div><div class="conversation-list">@foreach (var conversation in FilteredConversations) { <button class="conversation-row @(SelectedConversation?.Id == conversation.Id ? "selected" : "")" @onclick="() => SelectConversation(conversation)"><div class="avatar avatar-@conversation.Id">@conversation.Avatar <i class='presence @(conversation.IsOnline ? "" : "presence-hidden")'></i></div><div class="conversation-copy"><div><strong>@conversation.Name</strong><time>@conversation.Time</time></div><div><span>@conversation.Preview</span><b class='unread-badge @(conversation.Unread == 0 ? "hidden-badge" : "")'>@conversation.Unread</b></div></div></button> }</div><button class="new-chat-button">＋ <span>Start a new conversation</span></button></div>
+        <div class="chat-panel"><header class="chat-header"><button class="mobile-back icon-button" @onclick="CloseMobileChat">‹</button><div class="avatar avatar-@SelectedConversation!.Id">@SelectedConversation.Avatar</div><div class="chat-person"><h2>@SelectedConversation.Name</h2><span>@(SelectedConversation.IsOnline ? "Online now" : "Last seen recently")</span></div><div class="chat-actions"><button class="icon-button">⌕</button><button class="icon-button">⋮</button></div></header>
+            <div class="message-area"><div class="date-divider"><span>Today</span></div>@foreach (var message in SelectedConversation.Messages) { <div class="message-line @(message.IsMine ? "mine" : "")"><div class="message-bubble"><p>@message.Text</p><small>@message.Time <span class='read-check @(message.IsMine ? "" : "hidden-badge")'>✓✓</span></small></div></div> }<div class="typing-indicator"><span></span><span></span><span></span><em>@SelectedConversation.Name.Split(' ')[0] is typing...</em></div></div><div class="composer"><button class="attach-button">＋</button><input @bind="_draft" @bind:event="oninput" @onkeydown="HandleKeyDown" placeholder="Write a message..." /><button class="emoji-button">☺</button><button class="send-button" @onclick="SendMessage">↑</button></div>
+        </div>
+    </div>;
+    private async Task HandleKeyDown(KeyboardEventArgs args) { if (args.Key == "Enter") SendMessage(); await Task.CompletedTask; }
+    private RenderFragment ContactsView => @<div class="content-view">@ViewHeader("Contacts", "Stay close to the people who matter.", "＋ Add contact")<div class="search-box wide-search"><span>⌕</span><input placeholder="Search contacts" /><kbd>⌘ K</kbd></div><div class="section-title"><h2>Favorites</h2><span>@_data!.Contacts.Count(c => c.IsFavorite) people</span></div><div class="people-grid">@foreach (var contact in _data!.Contacts) { <div class="person-card"><div class="avatar avatar-@contact.Id">@contact.Avatar <i class='presence @(contact.IsOnline ? "" : "presence-hidden")'></i></div><strong>@contact.Name</strong><span>@contact.Username</span><small>@contact.Status</small><button @onclick='() => OpenChat(contact.Id)'>Message</button></div> }</div></div>;
+    private RenderFragment GroupsView => @<div class="content-view">@ViewHeader("Groups", "Shared spaces for every part of your life.", "＋ Create group")<div class="group-grid">@foreach (var group in _data!.Groups) { <div class="group-card"><div class="group-card-top"><div class="avatar avatar-@group.Id">@group.Avatar</div><button class="icon-button">⋮</button></div><h2>@group.Name</h2><p>@group.Description</p><div class="group-meta"><span>♧ @group.MemberCount members</span><span>@group.LastActivity</span></div><button class="outline-button" @onclick='() => OpenChat(group.Id)'>Open group</button></div>}<button class="create-card"><span>＋</span><strong>Create a new group</strong><small>Bring people together</small></button></div></div>;
+    private RenderFragment NotificationsView => @<div class="content-view narrow-view">@ViewHeader("Notifications", "Everything happening around your conversations.", "Mark all as read")<div class="notification-list">@foreach (var notification in _data!.Notifications) { <div class="notification-row @(notification.IsUnread ? "unread" : "")"><div class="notification-icon">@(notification.Icon == "person" ? "♧" : notification.Icon == "group" ? "▦" : "▣")</div><div><strong>@notification.Title</strong><p>@notification.Description</p><small>@notification.Time</small></div><i class='notification-dot @(notification.IsUnread ? "" : "hidden-badge")'></i></div> }</div><div class="empty-notification"><div>✦</div><h2>You're all caught up</h2><p>New activity will appear here as it happens.</p></div></div>;
+    private RenderFragment ProfileView => @<div class="content-view narrow-view">@ViewHeader("Profile & settings", "Make Pulse feel like yours.", "Save changes")<div class="profile-hero"><div class="avatar avatar-gradient large-avatar">@_data!.CurrentUser.Avatar</div><div><h2>@_data.CurrentUser.Name</h2><p>@_data.CurrentUser.Username</p><span class="status-pill"><span class="online-dot"></span> Online</span></div><button class="outline-button">Change photo</button></div><div class="settings-card"><h2>Account</h2><label>Display name<input value="@_data.CurrentUser.Name" /></label><label>Username<input value="@_data.CurrentUser.Username" /></label><label>About<input value="@_data.CurrentUser.Status" /></label></div><div class="settings-card preference-row"><div><strong>Desktop notifications</strong><small>Get notified when someone messages you</small></div><input type="checkbox" checked /></div></div>;
+    private RenderFragment ViewHeader(string Title, string Subtitle, string Action) => @<header class="view-header"><div><p class="eyebrow">Pulse community</p><h1>@Title</h1><p>@Subtitle</p></div><button class="primary-button">@Action</button></header>;
+    private void OpenChat(string id)
+    {
+        var conversation = _data!.Conversations.FirstOrDefault(item => item.Id == id);
+        if (conversation is null)
+        {
+            var contact = _data.Contacts.FirstOrDefault(item => item.Id == id);
+            var group = _data.Groups.FirstOrDefault(item => item.Id == id);
+            conversation = new Conversation
+            {
+                Id = id,
+                Name = contact?.Name ?? group?.Name ?? "New conversation",
+                Avatar = contact?.Avatar ?? group?.Avatar ?? "NC",
+                Preview = "Start a conversation",
+                Time = "now",
+                IsOnline = contact?.IsOnline ?? true,
+                IsGroup = group is not null
+            };
+            _data.Conversations.Add(conversation);
+        }
+
+        _selectedId = conversation.Id;
+        _showMobileChat = true;
+        SetView("chats");
+    }
+}
